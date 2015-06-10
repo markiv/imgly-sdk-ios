@@ -79,7 +79,9 @@ public class IMGLYOrientationCropFilter : CIFilter {
             #if os(iOS)
             let context = CIContext(options: nil)
             #elseif os(OSX)
-            let context = CIContext(CGContext: NSGraphicsContext.currentContext()?.CGContext, options: nil)
+            // TODO: Remove force unwrap
+            // TODO: Use Metal on 10.11
+            let context = CIContext(CGContext: NSGraphicsContext.currentContext()!.CGContext, options: nil)
             #endif
             
             let tempCGImage = context.createCGImage(transformedImage, fromRect: transformedImage.extent)

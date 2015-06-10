@@ -128,12 +128,12 @@ All types of response-filters.
     #elseif os(OSX)
 
     public class func processWithNSImage(image: NSImage, filters: [CIFilter]) -> NSImage? {
-        if let image = CIImage(data: image.TIFFRepresentation) {
+        if let data = image.TIFFRepresentation, image = CIImage(data: data) {
             let filteredCIImage = processWithCIImage(image, filters: filters)
             
             if let filteredCIImage = filteredCIImage {
                 let rep = NSCIImageRep(CIImage: filteredCIImage)
-                let image = NSImage(size: NSSize(width: filteredCIImage.extent().size.width, height: filteredCIImage.extent().size.height))
+                let image = NSImage(size: NSSize(width: filteredCIImage.extent.size.width, height: filteredCIImage.extent.size.height))
                 image.addRepresentation(rep)
                 return image
             }

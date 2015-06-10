@@ -87,7 +87,7 @@ public class IMGLYStickerFilter: CIFilter {
     #elseif os(OSX)
     
     private func createStickerImage() -> NSImage {
-        let rect = inputImage!.extent()
+        let rect = inputImage!.extent
         let imageSize = rect.size
         
         let image = NSImage(size: imageSize)
