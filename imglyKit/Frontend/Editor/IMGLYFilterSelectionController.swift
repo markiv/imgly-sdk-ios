@@ -36,7 +36,7 @@ public class IMGLYFilterSelectionController: UICollectionViewController {
         flowLayout.minimumLineSpacing = 7
         super.init(collectionViewLayout: flowLayout)
         
-        view.setTranslatesAutoresizingMaskIntoConstraints(false)
+        view.translatesAutoresizingMaskIntoConstraints = false
         collectionView?.registerClass(IMGLYFilterCollectionViewCell.self, forCellWithReuseIdentifier: FilterCollectionViewCellReuseIdentifier)
     }
 
@@ -45,13 +45,13 @@ public class IMGLYFilterSelectionController: UICollectionViewController {
     }
 }
 
-extension IMGLYFilterSelectionController: UICollectionViewDataSource {
+extension IMGLYFilterSelectionController {
     public override func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return count(IMGLYInstanceFactory.availableFilterList)
+        return IMGLYInstanceFactory.availableFilterList.count
     }
     
     public override func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCellWithReuseIdentifier(FilterCollectionViewCellReuseIdentifier, forIndexPath: indexPath) as! UICollectionViewCell
+        let cell = collectionView.dequeueReusableCellWithReuseIdentifier(FilterCollectionViewCellReuseIdentifier, forIndexPath: indexPath) as UICollectionViewCell
         
         if let filterCell = cell as? IMGLYFilterCollectionViewCell {
             let bundle = NSBundle(forClass: self.dynamicType)
@@ -101,11 +101,12 @@ extension IMGLYFilterSelectionController: UICollectionViewDataSource {
     }
 }
 
-extension IMGLYFilterSelectionController: UICollectionViewDelegate {
+extension IMGLYFilterSelectionController {
     public override func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
-        let layoutAttributes = collectionView.collectionViewLayout.layoutAttributesForItemAtIndexPath(indexPath)
-        let extendedCellRect = CGRectInset(layoutAttributes.frame, -60, 0)
-        collectionView.scrollRectToVisible(extendedCellRect, animated: true)
+        if let layoutAttributes = collectionView.collectionViewLayout.layoutAttributesForItemAtIndexPath(indexPath) {
+            let extendedCellRect = CGRectInset(layoutAttributes.frame, -60, 0)
+            collectionView.scrollRectToVisible(extendedCellRect, animated: true)
+        }
         
         let filterType = IMGLYInstanceFactory.availableFilterList[indexPath.item]
         

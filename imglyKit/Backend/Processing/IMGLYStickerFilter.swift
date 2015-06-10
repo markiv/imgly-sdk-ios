@@ -40,13 +40,13 @@ public class IMGLYStickerFilter: CIFilter {
         super.init()
     }
     
-    required public init(coder aDecoder: NSCoder) {
+    required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
     }
     
     /// Returns a CIImage object that encapsulates the operations configured in the filter. (read-only)
-    public override var outputImage: CIImage! {
-        if inputImage == nil {
+    public override var outputImage: CIImage {
+        guard let inputImage = inputImage else {
             return CIImage.emptyImage()
         }
         
@@ -54,18 +54,22 @@ public class IMGLYStickerFilter: CIFilter {
             return inputImage
         }
         
-        var stickerImage = createStickerImage()
-        var stickerCIImage = CIImage(CGImage: stickerImage.CGImage)
-        var filter = CIFilter(name: "CISourceOverCompositing")
-        filter.setValue(inputImage, forKey: kCIInputBackgroundImageKey)
-        filter.setValue(stickerCIImage, forKey: kCIInputImageKey)
-        return filter.outputImage
+        let stickerImage = createStickerImage()
+        
+        if let cgImage = stickerImage.CGImage, filter = CIFilter(name: "CISourceOverCompositing") {
+            let stickerCIImage = CIImage(CGImage: cgImage)
+            filter.setValue(inputImage, forKey: kCIInputBackgroundImageKey)
+            filter.setValue(stickerCIImage, forKey: kCIInputImageKey)
+            return filter.outputImage
+        } else {
+            return inputImage
+        }
     }
     
     #if os(iOS)
     
     private func createStickerImage() -> UIImage {
-        let rect = inputImage!.extent()
+        let rect = inputImage!.extent
         let imageSize = rect.size
         UIGraphicsBeginImageContext(imageSize)
         UIColor(white: 1.0, alpha: 0.0).setFill()
@@ -120,7 +124,7 @@ public class IMGLYStickerFilter: CIFilter {
     }
 }
 
-extension IMGLYStickerFilter: NSCopying {
+extension IMGLYStickerFilter {
     public override func copyWithZone(zone: NSZone) -> AnyObject {
         let copy = super.copyWithZone(zone) as! IMGLYStickerFilter
         copy.inputImage = inputImage?.copyWithZone(zone) as? CIImage

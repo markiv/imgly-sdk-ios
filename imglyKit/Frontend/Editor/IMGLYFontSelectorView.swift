@@ -36,7 +36,7 @@ public class IMGLYFontSelectorView: UIScrollView {
     
     private func configureFontButtons() {
         for fontName in fontNames {
-            let button = UIButton.buttonWithType(UIButtonType.Custom) as! UIButton
+            let button = UIButton(type: .Custom)
             button.setTitle(fontName, forState:UIControlState.Normal)
             button.contentHorizontalAlignment = UIControlContentHorizontalAlignment.Center
             

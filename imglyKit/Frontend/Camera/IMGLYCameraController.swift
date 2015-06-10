@@ -12,7 +12,7 @@ import OpenGLES
 import GLKit
 import CoreMotion
 
-struct IMGLYSDKVersion: Comparable, Printable {
+struct IMGLYSDKVersion: Comparable, CustomStringConvertible {
     let majorVersion: Int
     let minorVersion: Int
     let patchVersion: Int
@@ -119,15 +119,15 @@ public class IMGLYCameraController: NSObject {
         return Set(["session.running", "deviceAuthorized"])
     }
     
-    public override func observeValueForKeyPath(keyPath: String, ofObject object: AnyObject, change: [NSObject : AnyObject], context: UnsafeMutablePointer<Void>) {
+    public override func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [NSObject : AnyObject]?, context: UnsafeMutablePointer<Void>) {
         if context == &CapturingStillImageContext {
-            let capturingStillImage = change[NSKeyValueChangeNewKey]?.boolValue
+            let capturingStillImage = change?[NSKeyValueChangeNewKey]?.boolValue
             
             if let isCapturingStillImage = capturingStillImage where isCapturingStillImage {
                 self.delegate?.cameraControllerDidStartStillImageCapture?(self)
             }
         } else if context == &SessionRunningAndDeviceAuthorizedContext {
-            let running = change[NSKeyValueChangeNewKey]?.boolValue
+            let running = change?[NSKeyValueChangeNewKey]?.boolValue
             
             if let isRunning = running {
                 if isRunning {
@@ -149,8 +149,8 @@ public class IMGLYCameraController: NSObject {
     
     private func versionComponentsFromString(version: String) -> (majorVersion: Int, minorVersion: Int, patchVersion: Int)? {
         let versionComponents = version.componentsSeparatedByString(".")
-        if count(versionComponents) == 3 {
-            if let major = versionComponents[0].toInt(), minor = versionComponents[1].toInt(), patch = versionComponents[2].toInt() {
+        if versionComponents.count == 3 {
+            if let major = Int(versionComponents[0]), minor = Int(versionComponents[1]), patch = Int(versionComponents[2]) {
                 return (major, minor, patch)
             }
         }
@@ -163,19 +163,23 @@ public class IMGLYCameraController: NSObject {
         if let appIdentifier = appIdentifier, url = NSURL(string: "http://photoeditorsdk.com/version.json?type=ios&app=\(appIdentifier)") {
             let task = NSURLSession.sharedSession().dataTaskWithURL(url) { data, response, error in
                 if let data = data {
-                    let json = NSJSONSerialization.JSONObjectWithData(data, options: nil, error: nil) as? [String: String]
-                    
-                    if let json = json, version = json["version"], versionComponents = self.versionComponentsFromString(version) {
-                        let remoteVersion = IMGLYSDKVersion(majorVersion: versionComponents.majorVersion, minorVersion: versionComponents.minorVersion, patchVersion: versionComponents.patchVersion)
+                    do {
+                        let json = try NSJSONSerialization.JSONObjectWithData(data, options: []) as? [String: String]
                         
-                        if CurrentSDKVersion < remoteVersion {
-                            println("Your version of the img.ly SDK is outdated. You are using version \(CurrentSDKVersion), the latest available version is \(remoteVersion). Please consider updating.")
+                        if let json = json, version = json["version"], versionComponents = self.versionComponentsFromString(version) {
+                            let remoteVersion = IMGLYSDKVersion(majorVersion: versionComponents.majorVersion, minorVersion: versionComponents.minorVersion, patchVersion: versionComponents.patchVersion)
+                            
+                            if CurrentSDKVersion < remoteVersion {
+                                print("Your version of the img.ly SDK is outdated. You are using version \(CurrentSDKVersion), the latest available version is \(remoteVersion). Please consider updating.")
+                            }
                         }
+                    } catch {
+                        
                     }
                 }
             }
             
-            task.resume()
+            task?.resume()
         }
     }
     
@@ -235,15 +239,15 @@ public class IMGLYCameraController: NSObject {
                 
                 let visualEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .Dark))
                 visualEffectView.frame = snapshotWithBlur.bounds
-                visualEffectView.autoresizingMask = .FlexibleWidth | .FlexibleHeight
+                visualEffectView.autoresizingMask = [.FlexibleWidth, .FlexibleHeight]
                 snapshotWithBlur.addSubview(visualEffectView)
                 
                 // Transitioning between the regular snapshot and the blurred snapshot, this automatically removes `snapshot` and adds `snapshotWithBlur` to the view hierachy
-                UIView.transitionFromView(snapshot, toView: snapshotWithBlur, duration: 0.4, options: .TransitionFlipFromLeft | .CurveEaseOut, completion: { _ in
+                UIView.transitionFromView(snapshot, toView: snapshotWithBlur, duration: 0.4, options: [.TransitionFlipFromLeft, .CurveEaseOut], completion: { _ in
                     // Wait for camera to toggle
                     dispatch_group_notify(sessionGroup, dispatch_get_main_queue()) {
                         // Cross fading between blur and live preview, this sets `snapshotWithBlur.hidden` to `true` and `videoPreviewView.hidden` to false
-                        UIView.transitionFromView(snapshotWithBlur, toView: videoPreviewView, duration: 0.2, options: .TransitionCrossDissolve | .ShowHideTransitionViews, completion: { _ in
+                        UIView.transitionFromView(snapshotWithBlur, toView: videoPreviewView, duration: 0.2, options: [.TransitionCrossDissolve, .ShowHideTransitionViews], completion: { _ in
                             // Deleting the blurred snapshot
                             snapshotWithBlur.removeFromSuperview()
                         })
@@ -309,21 +313,22 @@ public class IMGLYCameraController: NSObject {
         
         set {
             dispatch_async(sessionQueue) {
-                var error: NSError?
                 self.session.beginConfiguration()
                 
                 if let device = self.videoDeviceInput?.device {
-                    device.lockForConfiguration(&error)
-                    device.flashMode = newValue
-                    device.unlockForConfiguration()
+                    do {
+                        try device.lockForConfiguration()
+                        device.flashMode = newValue
+                        device.unlockForConfiguration()
+                    } catch let error as NSError {
+                        print("Error changing flash mode: \(error.description)")
+                        return
+                    } catch {
+                        fatalError()
+                    }
                 }
                 
                 self.session.commitConfiguration()
-                
-                if let error = error {
-                    println("Error changing flash mode: \(error.description)")
-                    return
-                }
                 
                 self.delegate?.cameraController?(self, didChangeToFlashMode: newValue)
             }
@@ -411,9 +416,8 @@ public class IMGLYCameraController: NSObject {
     private func focusWithMode(focusMode: AVCaptureFocusMode, exposeWithMode exposureMode: AVCaptureExposureMode, atDevicePoint point: CGPoint, monitorSubjectAreaChange: Bool) {
         dispatch_async(sessionQueue) {
             if let device = self.videoDeviceInput?.device {
-                var error: NSError?
-
-                if device.lockForConfiguration(&error) {
+                do {
+                    try device.lockForConfiguration()
                     if self.focusPointSupported {
                         device.focusMode = focusMode
                         device.focusPointOfInterest = point
@@ -426,8 +430,10 @@ public class IMGLYCameraController: NSObject {
                     
                     device.subjectAreaChangeMonitoringEnabled = monitorSubjectAreaChange
                     device.unlockForConfiguration()
-                } else {
-                    println("Error in focusWithMode:exposeWithMode:atDevicePoint:monitorSubjectAreaChange: \(error?.description)")
+                } catch let error as NSError {
+                    print("Error in focusWithMode:exposeWithMode:atDevicePoint:monitorSubjectAreaChange: \(error.description)")
+                } catch {
+                    fatalError()
                 }
                 
             }
@@ -523,9 +529,12 @@ public class IMGLYCameraController: NSObject {
         checkSDKVersion()
         checkDeviceAuthorizationStatus()
         
-        glContext = EAGLContext(API: .OpenGLES2)
+        guard let glContext = EAGLContext(API: .OpenGLES2) else {
+            return
+        }
+        
         videoPreviewView = GLKView(frame: CGRectZero, context: glContext)
-        videoPreviewView!.autoresizingMask = .FlexibleWidth | .FlexibleHeight
+        videoPreviewView!.autoresizingMask = [.FlexibleWidth, .FlexibleHeight]
         videoPreviewView!.transform = CGAffineTransformMakeRotation(CGFloat(M_PI_2))
         videoPreviewView!.frame = previewView.bounds
         
@@ -564,31 +573,29 @@ public class IMGLYCameraController: NSObject {
     }
     
     private func setupInputsForPreferredCameraPosition(cameraPosition: AVCaptureDevicePosition) {
-        var error: NSError?
-        
         let videoDevice = IMGLYCameraController.deviceWithMediaType(AVMediaTypeVideo, preferringPosition: cameraPosition)
-        let videoDeviceInput = AVCaptureDeviceInput(device: videoDevice, error: &error)
-        
-        if let error = error {
-            println("Error in setupInputsForPreferredCameraPosition: \(error.description)")
-        }
-        
-        if self.session.canAddInput(videoDeviceInput) {
-            self.session.addInput(videoDeviceInput)
-            self.videoDeviceInput = videoDeviceInput
-            
-            dispatch_async(dispatch_get_main_queue()) {
-                if let videoPreviewView = self.videoPreviewView, device = videoDevice {
-                    if device.position == .Front {
-                        // front camera is mirrored so we need to transform the preview view
-                        videoPreviewView.transform = CGAffineTransformMakeRotation(CGFloat(M_PI_2))
-                        videoPreviewView.transform = CGAffineTransformScale(videoPreviewView.transform, 1, -1)
-                    } else {
-                        videoPreviewView.transform = CGAffineTransformMakeRotation(CGFloat(M_PI_2))
+        do {
+            let videoDeviceInput = try AVCaptureDeviceInput(device: videoDevice)
+            if self.session.canAddInput(videoDeviceInput) {
+                self.session.addInput(videoDeviceInput)
+                self.videoDeviceInput = videoDeviceInput
+                
+                dispatch_async(dispatch_get_main_queue()) {
+                    if let videoPreviewView = self.videoPreviewView, device = videoDevice {
+                        if device.position == .Front {
+                            // front camera is mirrored so we need to transform the preview view
+                            videoPreviewView.transform = CGAffineTransformMakeRotation(CGFloat(M_PI_2))
+                            videoPreviewView.transform = CGAffineTransformScale(videoPreviewView.transform, 1, -1)
+                        } else {
+                            videoPreviewView.transform = CGAffineTransformMakeRotation(CGFloat(M_PI_2))
+                        }
                     }
                 }
             }
+        } catch let error as NSError {
+            print("Error in setupInputsForPreferredCameraPosition: \(error.description)")
         }
+        
     }
     
     private func setupOutputs() {
@@ -620,6 +627,10 @@ public class IMGLYCameraController: NSObject {
         
         // Used to determine device orientation even if orientation lock is active
         motionManager.startAccelerometerUpdatesToQueue(motionManagerQueue, withHandler: { accelerometerData, _ in
+            guard let accelerometerData = accelerometerData else {
+                return
+            }
+            
             if abs(accelerometerData.acceleration.y) < abs(accelerometerData.acceleration.x) {
                 if accelerometerData.acceleration.x > 0 {
                     self.captureVideoOrientation = .LandscapeLeft
@@ -638,8 +649,8 @@ public class IMGLYCameraController: NSObject {
     
     private func startCameraWithCompletion(completion: (() -> (Void))?) {
         dispatch_async(sessionQueue) {
-            self.addObserver(self, forKeyPath: "sessionRunningAndDeviceAuthorized", options: .Old | .New, context: &SessionRunningAndDeviceAuthorizedContext)
-            self.addObserver(self, forKeyPath: "stillImageOutput.capturingStillImage", options: .Old | .New, context: &CapturingStillImageContext)
+            self.addObserver(self, forKeyPath: "sessionRunningAndDeviceAuthorized", options: [.Old, .New], context: &SessionRunningAndDeviceAuthorizedContext)
+            self.addObserver(self, forKeyPath: "stillImageOutput.capturingStillImage", options: [.Old, .New], context: &CapturingStillImageContext)
             
             self.addObserversToInputDevice()
             
@@ -656,8 +667,8 @@ public class IMGLYCameraController: NSObject {
     
     private func addObserversToInputDevice() {
         if let device = self.videoDeviceInput?.device {
-            device.addObserver(self, forKeyPath: "focusMode", options: .Old | .New, context: &FocusAndExposureContext)
-            device.addObserver(self, forKeyPath: "exposureMode", options: .Old | .New, context: &FocusAndExposureContext)
+            device.addObserver(self, forKeyPath: "focusMode", options: [.Old, .New], context: &FocusAndExposureContext)
+            device.addObserver(self, forKeyPath: "exposureMode", options: [.Old, .New], context: &FocusAndExposureContext)
         }
         
         NSNotificationCenter.defaultCenter().addObserver(self, selector: "subjectAreaDidChange:", name: AVCaptureDeviceSubjectAreaDidChangeNotification, object: self.videoDeviceInput?.device)
@@ -716,7 +727,7 @@ public class IMGLYCameraController: NSObject {
     /**
     Takes a photo and hands it over to the completion block.
     
-    :param: completion A completion block that has an image and an error as parameters.
+    - parameter completion: A completion block that has an image and an error as parameters.
     If the image was taken sucessfully the error is nil.
     */
     public func takePhoto(completion: IMGLYTakePhotoBlock) {
@@ -765,11 +776,16 @@ public class IMGLYCameraController: NSObject {
 
 extension IMGLYCameraController: AVCaptureVideoDataOutputSampleBufferDelegate {
     public func captureOutput(captureOutput: AVCaptureOutput!, didOutputSampleBuffer sampleBuffer: CMSampleBuffer!, fromConnection connection: AVCaptureConnection!) {
-        let formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer)
-        let mediaType = CMFormatDescriptionGetMediaType(formatDescription)
+        guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
+            return
+        }
         
-        let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)
-        let sourceImage = CIImage(CVPixelBuffer: imageBuffer as CVPixelBufferRef, options: nil)
+        let sourceImage: CIImage
+        if #available(iOS 9.0, *) {
+            sourceImage = CIImage(CVImageBuffer: imageBuffer)
+        } else {
+            sourceImage = CIImage(CVPixelBuffer: imageBuffer as CVPixelBuffer)
+        }
         
         let filteredImage: CIImage?
         
@@ -779,7 +795,7 @@ extension IMGLYCameraController: AVCaptureVideoDataOutputSampleBufferDelegate {
             filteredImage = IMGLYPhotoProcessor.processWithCIImage(sourceImage, filters: [effectFilter])
         }
         
-        let sourceExtent = sourceImage.extent()
+        let sourceExtent = sourceImage.extent
         
         if let videoPreviewView = videoPreviewView {
             let targetRect = CGRect(x: 0, y: 0, width: videoPreviewView.drawableWidth, height: videoPreviewView.drawableHeight)

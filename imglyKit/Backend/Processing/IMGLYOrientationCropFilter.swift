@@ -38,7 +38,7 @@ public class IMGLYOrientationCropFilter : CIFilter {
     private var flipVertical_ = false
     private var flipHorizontal_ = false
     
-    required public init(coder aDecoder: NSCoder) {
+    required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         self.imgly_displayName = "OrientationCropFilter"
     }
@@ -49,18 +49,23 @@ public class IMGLYOrientationCropFilter : CIFilter {
     }
     
     /// Returns a CIImage object that encapsulates the operations configured in the filter. (read-only)
-    public override var outputImage: CIImage! {
+    public override var outputImage: CIImage {
         get {
-            if inputImage == nil {
+            guard let inputImage = inputImage else {
                 return CIImage.emptyImage()
             }
-            var radiant = realNumberForRotationAngle(rotationAngle)
-            var rotationTransformation = CGAffineTransformMakeRotation(radiant)
-            var flipH:CGFloat = flipHorizontal_ ? -1 : 1
-            var flipV:CGFloat = flipVertical_ ? -1 : 1
+            
+            let radiant = realNumberForRotationAngle(rotationAngle)
+            let rotationTransformation = CGAffineTransformMakeRotation(radiant)
+            let flipH:CGFloat = flipHorizontal_ ? -1 : 1
+            let flipV:CGFloat = flipVertical_ ? -1 : 1
             var flipTransformation = CGAffineTransformScale(rotationTransformation, flipH, flipV)
-            var filter = CIFilter(name: "CIAffineTransform")
-            filter.setValue(inputImage!, forKey: kCIInputImageKey)
+            
+            guard let filter = CIFilter(name: "CIAffineTransform") else {
+                return inputImage
+            }
+            
+            filter.setValue(inputImage, forKey: kCIInputImageKey)
             
             #if os(iOS)
             let transform = NSValue(CGAffineTransform: flipTransformation)
@@ -69,7 +74,7 @@ public class IMGLYOrientationCropFilter : CIFilter {
             #endif
             
             filter.setValue(transform, forKey: kCIInputTransformKey)
-            var transformedImage = filter!.outputImage
+            let transformedImage = filter.outputImage
             
             #if os(iOS)
             let context = CIContext(options: nil)
@@ -77,12 +82,12 @@ public class IMGLYOrientationCropFilter : CIFilter {
             let context = CIContext(CGContext: NSGraphicsContext.currentContext()?.CGContext, options: nil)
             #endif
             
-            var tempCGImage = context.createCGImage(transformedImage!, fromRect: transformedImage!.extent())
-            var tempCIImage = CIImage(CGImage: tempCGImage)
-            var cropFilter = IMGLYCropFilter()
+            let tempCGImage = context.createCGImage(transformedImage, fromRect: transformedImage.extent)
+            let tempCIImage = CIImage(CGImage: tempCGImage)
+            let cropFilter = IMGLYCropFilter()
             cropFilter.cropRect = cropRect
-            cropFilter.setValue(tempCIImage!, forKey: kCIInputImageKey)
-            var croppedImage = cropFilter.outputImage
+            cropFilter.setValue(tempCIImage, forKey: kCIInputImageKey)
+            let croppedImage = cropFilter.outputImage
             return croppedImage
         }
     }
@@ -156,7 +161,7 @@ public class IMGLYOrientationCropFilter : CIFilter {
     }
 }
 
-extension IMGLYOrientationCropFilter: NSCopying {
+extension IMGLYOrientationCropFilter {
     public override func copyWithZone(zone: NSZone) -> AnyObject {
         let copy = super.copyWithZone(zone) as! IMGLYOrientationCropFilter
         copy.inputImage = inputImage?.copyWithZone(zone) as? CIImage

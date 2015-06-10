@@ -23,20 +23,24 @@ public class IMGLYContrastBrightnessSaturationFilter : CIFilter {
     public var saturation:Float = 1.0
     
     /// Returns a CIImage object that encapsulates the operations configured in the filter. (read-only)
-    public override var outputImage: CIImage! {
-        if inputImage == nil {
+    public override var outputImage: CIImage {
+        guard let inputImage = inputImage else {
             return CIImage.emptyImage()
         }
-        var contrastFilter = CIFilter(name:"CIColorControls")
-        contrastFilter.setValue(contrast, forKey: "inputContrast")
-        contrastFilter.setValue(brightness, forKey: "inputBrightness")
-        contrastFilter.setValue(saturation, forKey: "inputSaturation")
-        contrastFilter.setValue(inputImage, forKey: kCIInputImageKey)
-        return contrastFilter.outputImage
+        
+        if let contrastFilter = CIFilter(name:"CIColorControls") {
+            contrastFilter.setValue(contrast, forKey: "inputContrast")
+            contrastFilter.setValue(brightness, forKey: "inputBrightness")
+            contrastFilter.setValue(saturation, forKey: "inputSaturation")
+            contrastFilter.setValue(inputImage, forKey: kCIInputImageKey)
+            return contrastFilter.outputImage
+        } else {
+            return inputImage
+        }
     }
 }
 
-extension IMGLYContrastBrightnessSaturationFilter: NSCopying {
+extension IMGLYContrastBrightnessSaturationFilter {
     public override func copyWithZone(zone: NSZone) -> AnyObject {
         let copy = super.copyWithZone(zone) as! IMGLYContrastBrightnessSaturationFilter
         copy.inputImage = inputImage?.copyWithZone(zone) as? CIImage

@@ -96,7 +96,6 @@ All types of response-filters.
         }
         
         var currentImage:CIImage? = image
-        var activeInputs:[CIImage] = []
         
         for filter in filters {
             filter.setValue(currentImage!, forKey:kCIInputImageKey)
@@ -107,7 +106,7 @@ All types of response-filters.
             }
         }
         
-        if CGRectIsEmpty(currentImage!.extent()) {
+        if CGRectIsEmpty(currentImage!.extent) {
             return nil
         }
         return currentImage
@@ -116,9 +115,13 @@ All types of response-filters.
     #if os(iOS)
     
     public class func processWithUIImage(image: UIImage, filters: [CIFilter]) -> UIImage? {
-        var imageOrientation = image.imageOrientation
-        var filteredCIImage = processWithCIImage(CIImage(image: image), filters: filters)
-        var filteredCGImage = CIContext(options: nil).createCGImage(filteredCIImage!, fromRect: filteredCIImage!.extent())
+        let imageOrientation = image.imageOrientation
+        guard let coreImage = CIImage(image: image) else {
+            return nil
+        }
+        
+        let filteredCIImage = processWithCIImage(coreImage, filters: filters)
+        let filteredCGImage = CIContext(options: nil).createCGImage(filteredCIImage!, fromRect: filteredCIImage!.extent)
         return UIImage(CGImage: filteredCGImage, scale: 1.0, orientation: imageOrientation)
     }
     
