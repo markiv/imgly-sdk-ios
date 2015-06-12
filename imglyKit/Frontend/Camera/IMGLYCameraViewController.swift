@@ -424,8 +424,11 @@ public class IMGLYCameraViewController: UIViewController {
         cameraController?.stopCamera()
         let imagePicker = UIImagePickerController()
         
-        imagePicker.delegate = self
-        imagePicker.sourceType = UIImagePickerControllerSourceType.PhotoLibrary
+        // This crashes the Swift compiler in 'Release' configuration as of Swift 2.0-beta1 for some reason: rdar://21355582
+        // Using setValue:forKey: works as a workaround
+        // imagePicker.delegate = self
+        imagePicker.setValue(self, forKey: "delegate")
+        imagePicker.sourceType = .PhotoLibrary
         imagePicker.mediaTypes = [String(kUTTypeImage)]
         imagePicker.allowsEditing = false
         
