@@ -216,6 +216,15 @@ import Foundation
     }
     
     /**
+    Creates an scale filter.
+
+    - returns: A scale filter.
+    */
+    public class func scaleFilter() -> IMGLYScaleFilter {
+        return IMGLYScaleFilter()
+    }
+    
+    /**
     Returns the list of filters, that should be available in the dialogs.
     Change this list to select the set of filters you want to present to the user.
     - returns: An array of filter types.

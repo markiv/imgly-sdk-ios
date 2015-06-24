@@ -67,6 +67,12 @@ public class IMGLYOrientationCropFilter : CIFilter {
             
             filter.setValue(inputImage, forKey: kCIInputImageKey)
             
+            if let orientation = inputImage.properties["Orientation"] as? NSNumber {
+                // Rotate image to match image orientation before cropping
+                let transform = inputImage.imageTransformForOrientation(orientation.intValue)
+                flipTransformation = CGAffineTransformConcat(flipTransformation, transform)
+            }
+            
             #if os(iOS)
             let transform = NSValue(CGAffineTransform: flipTransformation)
             #elseif os(OSX)
@@ -74,23 +80,33 @@ public class IMGLYOrientationCropFilter : CIFilter {
             #endif
             
             filter.setValue(transform, forKey: kCIInputTransformKey)
-            let transformedImage = filter.outputImage
+            var outputImage = filter.outputImage
             
-            #if os(iOS)
-            let context = CIContext(options: nil)
-            #elseif os(OSX)
-            // TODO: Remove force unwrap
-            // TODO: Use Metal on 10.11
-            let context = CIContext(CGContext: NSGraphicsContext.currentContext()!.CGContext, options: nil)
-            #endif
-            
-            let tempCGImage = context.createCGImage(transformedImage, fromRect: transformedImage.extent)
-            let tempCIImage = CIImage(CGImage: tempCGImage)
             let cropFilter = IMGLYCropFilter()
             cropFilter.cropRect = cropRect
-            cropFilter.setValue(tempCIImage, forKey: kCIInputImageKey)
-            let croppedImage = cropFilter.outputImage
-            return croppedImage
+            cropFilter.setValue(outputImage, forKey: kCIInputImageKey)
+            outputImage = cropFilter.outputImage
+            
+            if let orientation = inputImage.properties["Orientation"] as? NSNumber {
+                // Rotate image back to match metadata
+                let invertedTransform = CGAffineTransformInvert(inputImage.imageTransformForOrientation(orientation.intValue))
+                
+                guard let filter = CIFilter(name: "CIAffineTransform") else {
+                    return outputImage
+                }
+                
+                #if os(iOS)
+                let transform = NSValue(CGAffineTransform: invertedTransform)
+                #elseif os(OSX)
+                let transform = NSAffineTransform(CGAffineTransform: invertedTransform)
+                #endif
+                
+                filter.setValue(transform, forKey: kCIInputTransformKey)
+                filter.setValue(outputImage, forKey: kCIInputImageKey)
+                outputImage = filter.outputImage
+            }
+            
+            return outputImage
         }
     }
     

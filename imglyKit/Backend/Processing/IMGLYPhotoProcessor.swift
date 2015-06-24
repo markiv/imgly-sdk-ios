@@ -95,20 +95,18 @@ All types of response-filters.
             return image
         }
         
-        var currentImage:CIImage? = image
+        var currentImage = image
         
         for filter in filters {
-            filter.setValue(currentImage!, forKey:kCIInputImageKey)
+            filter.setValue(currentImage, forKey: kCIInputImageKey)
             
             currentImage = filter.outputImage
-            if currentImage == nil {
-                return nil
-            }
         }
         
-        if CGRectIsEmpty(currentImage!.extent) {
+        if CGRectIsEmpty(currentImage.extent) {
             return nil
         }
+        
         return currentImage
     }
     

@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2B04CA011B3AFE33009B529F /* IMGLYScaleFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B04CA001B3AFE33009B529F /* IMGLYScaleFilter.swift */; };
+		2B04CA021B3AFE33009B529F /* IMGLYScaleFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B04CA001B3AFE33009B529F /* IMGLYScaleFilter.swift */; };
 		2B0DC4C31B037016002FE44F /* NSTimerExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B0DC4C21B037016002FE44F /* NSTimerExtension.swift */; };
 		2B1ADA101B19C3F300C98522 /* IMGLYInstanceFactoryExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1ADA0F1B19C3F300C98522 /* IMGLYInstanceFactoryExtension.swift */; };
 		2B1ADA371B19C8CE00C98522 /* CIFilterExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BF4D3EB1AF1151500C801B2 /* CIFilterExtension.swift */; };
@@ -393,6 +395,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2B04CA001B3AFE33009B529F /* IMGLYScaleFilter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMGLYScaleFilter.swift; sourceTree = "<group>"; };
 		2B0DC4C21B037016002FE44F /* NSTimerExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NSTimerExtension.swift; sourceTree = "<group>"; };
 		2B1ADA0F1B19C3F300C98522 /* IMGLYInstanceFactoryExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMGLYInstanceFactoryExtension.swift; sourceTree = "<group>"; };
 		2B1ADA1D1B19C86300C98522 /* imglyKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = imglyKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -870,6 +873,7 @@
 				2BF4D4A31AF1154B00C801B2 /* IMGLYNoneFilter.swift */,
 				2BF4D4A41AF1154B00C801B2 /* IMGLYOrientationCropFilter.swift */,
 				2BF4D4A51AF1154B00C801B2 /* IMGLYPhotoProcessor.swift */,
+				2B04CA001B3AFE33009B529F /* IMGLYScaleFilter.swift */,
 				2BF4D4A61AF1154B00C801B2 /* IMGLYStickerFilter.swift */,
 				2BF4D4A71AF1154B00C801B2 /* IMGLYTextFilter.swift */,
 				2BF4D4A81AF1154B00C801B2 /* IMGLYTiltshiftFilter.swift */,
@@ -1287,6 +1291,7 @@
 				2B1ADA9B1B19C8E500C98522 /* LUTToNSDataConverter.m in Sources */,
 				2B1ADADE1B19C8EE00C98522 /* IMGLYWinterFilter.swift in Sources */,
 				2B1ADAB51B19C8EE00C98522 /* IMGLYFrontFilter.swift in Sources */,
+				2B04CA021B3AFE33009B529F /* IMGLYScaleFilter.swift in Sources */,
 				2B1ADAA91B19C8EE00C98522 /* IMGLYColorfulFilter.swift in Sources */,
 				2B1ADAA11B19C8EE00C98522 /* IMGLYBlissfulBlueFilter.swift in Sources */,
 				2B1ADACF1B19C8EE00C98522 /* IMGLYPro400Filter.swift in Sources */,
@@ -1425,6 +1430,7 @@
 				2BF4D5111AF1155E00C801B2 /* IMGLYGlamFilter.swift in Sources */,
 				2BF4D5061AF1155E00C801B2 /* IMGLYCottonCandyFilter.swift in Sources */,
 				2BF4D4A91AF1154B00C801B2 /* IMGLYContrastBrightnessSaturationFilter.swift in Sources */,
+				2B04CA011B3AFE33009B529F /* IMGLYScaleFilter.swift in Sources */,
 				2BF4D4FD1AF1155E00C801B2 /* IMGLYBluesFilter.swift in Sources */,
 				2BF4D5051AF1155E00C801B2 /* IMGLYCoolFilter.swift in Sources */,
 				2BF4D4AE1AF1154B00C801B2 /* IMGLYOrientationCropFilter.swift in Sources */,
