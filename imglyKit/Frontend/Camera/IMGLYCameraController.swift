@@ -77,6 +77,7 @@ public class IMGLYCameraController: NSObject {
     public let previewView: UIView
     public weak var delegate: IMGLYCameraControllerDelegate?
     public let tapGestureRecognizer = UITapGestureRecognizer()
+    public var shouldStartWithFrontCamera = false
     
     dynamic private let session = AVCaptureSession()
     private let sessionQueue = dispatch_queue_create("capture_session_queue", nil)
@@ -535,7 +536,8 @@ public class IMGLYCameraController: NSObject {
         ciContext = CIContext(EAGLContext: glContext)
         videoPreviewView!.bindDrawable()
         
-        setupWithPreferredCameraPosition(.Back) {
+        let position = shouldStartWithFrontCamera ? AVCaptureDevicePosition.Front : .Back
+        setupWithPreferredCameraPosition(position) {
             if let device = self.videoDeviceInput?.device {
                 if device.isFlashModeSupported(.Auto) {
                     self.flashMode = .Auto
